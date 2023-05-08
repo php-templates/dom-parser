@@ -11,13 +11,16 @@ $r->appendChild($n1);
 $r->appendChild($n2);
 $r->appendChild($n3);
 
-$n2->insertBefore($n1);
+$r2 = new DomNode('root2');
+$r2->appendChild($r->getChildNodes());
 
 echo $r;
+echo $r2;
 ?>
 =====
-<root>
-    <n2></n2>
+<root></root>
+<root2>
     <n1></n1>
+    <n2></n2>
     <n3></n3>
-</root>
+</root2>
