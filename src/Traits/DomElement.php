@@ -71,21 +71,21 @@ trait DomElement
         return $this->childNodes;
     }
 
-    public function setParentNode(DomElementInterface $node = null): ?DomElementInterface
+    public function setParentNode(DomElementInterface $node = null): DomElementInterface
     {
         $this->parentNode = $node;
 
         return $this;
     }
 
-    public function setPrevSibling(DomElementInterface $node = null): ?DomElementInterface
+    public function setPrevSibling(DomElementInterface $node = null): DomElementInterface
     {
         $this->prevSibling = $node;
 
         return $this;
     }
 
-    public function setNextSibling(DomElementInterface $node = null): ?DomElementInterface
+    public function setNextSibling(DomElementInterface $node = null): DomElementInterface
     {
         $this->nextSibling = $node;
 
@@ -205,10 +205,14 @@ trait DomElement
 
     public function detach(): DomElementInterface
     {
+        $parent = $this->getParentNode();
         $prev = $this->getPrevSibling();
         $next = $this->getNextSibling();
         $prev && $prev->setNextSibling($next);
         $next && $next->setPrevSibling($prev);
+        if ($parent && $parent->getChildNodes()->head === $this) {
+            $parent->getChildNodes()->head = $next;
+        }
         $this->setParentNode(null);
         $this->setPrevSibling(null);
         $this->setNextSibling(null);

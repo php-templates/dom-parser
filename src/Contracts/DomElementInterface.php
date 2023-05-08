@@ -21,11 +21,11 @@ interface DomElementInterface
 
     public function getChildNodes(): DomNodeIterator;
 
-    public function setParentNode(DomElementInterface $node = null): ?DomElementInterface;
+    public function setParentNode(DomElementInterface $node = null): DomElementInterface;
 
-    public function setPrevSibling(DomElementInterface $node = null): ?DomElementInterface;
+    public function setPrevSibling(DomElementInterface $node = null): DomElementInterface;
 
-    public function setNextSibling(DomElementInterface $node = null): ?DomElementInterface;
+    public function setNextSibling(DomElementInterface $node = null): DomElementInterface;
 
     /**
      * Append a new child node to current node.

@@ -4,7 +4,7 @@ namespace PhpTemplates\Dom;
 
 use PhpTemplates\Dom\Contracts\DomElementInterface;
 
-class DomNodeIterator implements \Iterator
+class DomNodeIterator implements \Iterator, DomElementInterface
 {
     public ?DomElementInterface $head = null;
     private ?DomElementInterface $current = null;
@@ -104,5 +104,156 @@ class DomNodeIterator implements \Iterator
         }
 
         return $output;
+    }
+
+    public function getParentNode(): ?DomElementInterface
+    {
+        if ($this->head) {
+            return $this->head->getParentNode();
+        }
+    }
+
+    public function getPrevSibling(): ?DomElementInterface
+    {
+        if ($this->head) {
+            return $this->head->getPrevSibling();
+        }
+    }
+
+    public function getNextSibling(): ?DomElementInterface
+    {
+        if ($this->head) {
+            return $this->head->getNextSibling();
+        }
+    }
+
+    public function getChildNodes(): DomNodeIterator
+    {
+        if ($this->head) {
+            return $this->head->getChildNodes();
+        }
+
+        return new DomNodeIterator;
+    }
+
+    public function setParentNode(DomElementInterface $node = null): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->setParentNode($node);
+        }
+
+        return $this;
+    }
+
+    public function setPrevSibling(DomElementInterface $node = null): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->setPrevSibling($node);
+        }
+
+        return $this;
+    }
+
+    public function setNextSibling(DomElementInterface $node = null): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->setNextSibling($node);
+        }
+
+        return $this;
+    }
+
+    public function appendChild(DomElementInterface $node): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->appendChild($node);
+        }
+
+        return $this;
+    }
+
+    public function prependChild(DomElementInterface $node): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->prependChild($node);
+        }
+
+        return $this;
+    }
+
+    public function insertBefore(DomElementInterface $node): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->insertBefore($node);
+        }
+
+        return $this;
+    }
+
+    public function appendTo(DomElementInterface $node): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->appendTo($node);
+        }
+
+        return $this;
+    }
+
+    public function insertAfter(DomElementInterface $node): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->insertAfter($node);
+        }
+
+        return $this;
+    }
+
+    public function before(DomElementInterface $node): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->before($node);
+        }
+
+        return $this;
+    }
+
+    public function after(DomElementInterface $node): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->after($node);
+        }
+
+        return $this;
+    }
+
+    public function detach(): DomElementInterface
+    {
+        $this->rewind();
+        while ($elNode = $this->current) {
+            $this->next();
+            $elNode->detach();
+        }
+
+        return $this;
     }
 }
