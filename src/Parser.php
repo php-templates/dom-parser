@@ -10,31 +10,27 @@ class Parser
 {
     private $dom;
     private $nodeQueue = [];
-    
+
     private $line = 1;
     private $scope = 'text';
     private $buildingNode;
-    private $buildingAttribute;
-    
+    private $buildingAttr;
+
     private $options = [
-        'repair_html' => true,
+        'repair_html' => false,
+        'throw_errors' => false,
     ];
 
     public function __construct(array $options = [])
     {
         $this->options = array_merge($this->options, $options);
     }
-    
+
     public function parse(/*Source*/ $source)
     {
         $this->dom = new DomNode('#root');
         $this->nodeQueue = [];
-        $this->building = (object) [
-            'node' => null,
-            'attr' => new \stdClass,
-            'text' => '',
-        ];
-        
+
         $html = (string)$source;
         $chars = array_map('preg_quote', [
             '<',
@@ -58,75 +54,82 @@ class Parser
             '[\s\t ]+',
             '[\n\r]',
         ], $chars));
- 
+
         $tokens = preg_split("/($chars)/ms", $html, -1, PREG_SPLIT_DELIM_CAPTURE);
         foreach ($tokens as $token) {
             $this->add($token);
         }
-        return $this->dom;
+
+        if ($this->dom->getChildNodes()->count() > 1) {
+            return $this->dom->getChildNodes();
+        }
+
+        return $this->dom->getChildNodes()->first();
     }
-    
-    private function add($token) 
+
+    protected function add($token)
     {
-        //!empty($GLOBALS['x']) && var_dump($this->scope.' += '.$token);
         if (preg_match_all('/[\n\r]/', $token, $m)) {
             $this->line += count($m[0]);
         }
-        $GLOBALS['x'] = !empty($GLOBALS['x']) || ($this->buildingNode && strpos($this->buildingNode->nodeValue, '22222222'));
-        
+
         $this->{$this->scope . 'Scope'}($token);
     }
-    
-    private function textScope($token) 
+
+    protected function textScope($token)
     {
         $parentNode = end($this->nodeQueue);
         $parentNode = $parentNode ? $parentNode : $this->dom;
         if (!$this->buildingNode) {
-            $this->buildingNode = new DomNode('#text', '');
+            $this->buildingNode = new TextNode();
         }
-        
+
         if ($token == '<!--') {
-            $this->buildingNode->nodeValue .= $token;
+            $this->buildingNode->append($token);
             $this->scope = 'comment';
         }
-        
-        elseif (preg_match('/<\/([a-zA-Z0-9_\-]+)>/', $token, $m)) 
+
+        elseif (preg_match('/<\/([a-zA-Z0-9_\-]+)>/', $token, $m))
         {
             // <foo>[</foo>]
-            if ($parentNode !== $this->dom && $parentNode->nodeName != $m[1]) {
+            if ($parentNode !== $this->dom && $parentNode->getNodeName() != $m[1]) {
                 if ($this->options['repair_html']) {
                     return $this->tryCloseTag($m[1]);
                 }
-                throw new \Exception("Unexpected token $token at line {$this->line}, expecting end tag for node <{$parentNode->nodeName}> started at line {$parentNode->lineNumber}");
+                elseif (!$this->options['throw_errors']) {
+                    // treat it as text
+                    return $this->buildingNode->append($token);
+                }
+                throw new \Exception("Unexpected token $token at line {$this->line}, expecting end tag for node <{$parentNode->getNodeName()}> started at line {$parentNode->meta['lineNumber']}");
             }
-            
-            if (trim($this->buildingNode->nodeValue) !== '') {
+
+            if (trim($this->buildingNode->getNodeValue()) !== '') {
                 $parentNode->appendChild($this->buildingNode);
             }
             array_pop($this->nodeQueue);
             //$m[1]=='script' && d(end($this->nodeQueue));
             $this->buildingNode = null;
         }
-        
-        elseif (preg_match('/<([a-zA-Z0-9_\-]+)/', $token, $m)) 
+
+        elseif (preg_match('/<([a-zA-Z0-9_\-]+)/', $token, $m))
         {
             // [<foo] bar=""
-            if (trim($this->buildingNode->nodeValue) !== '') {
+            if (trim($this->buildingNode->getNodeValue()) !== '') {
                 $parentNode->appendChild($this->buildingNode);
             }
-            
+
             $this->buildingNode = new DomNode($m[1]);
-            $this->buildingNode->lineNumber = $this->line;
+            $this->buildingNode->meta['lineNumber'] = $this->line;
             $this->scope = 'nodeDeclaration';
         }
-        
-        else 
+
+        else
         {
-            $this->buildingNode->nodeValue .= $token;
-        }        
+            $this->buildingNode->append($token);
+        }
     }
-    
-    private function nodeDeclarationScope($token)
+
+    protected function nodeDeclarationScope($token)
     {
         $parentNode = end($this->nodeQueue);
         $parentNode = $parentNode ? $parentNode : $this->dom;
@@ -134,33 +137,33 @@ class Parser
         if ($token == '>') {
             // <foo[>]
             $parentNode->appendChild($this->buildingNode);
-            if (!in_array($this->buildingNode->nodeName, DomNode::$selfClosingTags)) {
+            if (!in_array($this->buildingNode->getNodeName(), DomNode::$selfClosingTags)) {
                 $this->nodeQueue[] = $this->buildingNode;
             }
-            if ($this->buildingNode->nodeName == 'script') {
+            if ($this->buildingNode->getNodeName() == 'script') {
                 $this->scope = 'script';
             } else {
                 $this->scope = 'text';
             }
-            $this->buildingNode = new DomNode('#text', '');
+            $this->buildingNode = new TextNode();
         }
-        
+
         elseif ($token == '/>') {
             // <foo [/>]
-            $this->buildingNode->shortClose = true;
+            $this->buildingNode->meta['shortClose'] = true;
             $parentNode->appendChild($this->buildingNode);
-            $this->buildingNode = new DomNode('#text', '');
+            $this->buildingNode = new TextNode();
             $this->scope = 'text';
         }
-        
+
         elseif (trim($token) !== '') {
             // <foo [bar]="bam">
             $this->buildingAttr = new DomNodeAttr($token, null);
             $this->scope = 'nodeAttributeDeclaration';
         }
     }
-    
-    private function nodeAttributeDeclarationScope($token)
+
+    protected function nodeAttributeDeclarationScope($token)
     {
         $delimiter = substr($token, -1);
         if ($token && $token[0] == '=' && in_array($delimiter, ['"', "'"])) {
@@ -176,49 +179,49 @@ class Parser
         else {
             // foo[ ]bar - html5
             // TODO: throw error if not space
-            $this->buildingNode->addAttribute($this->buildingAttr);
+            $this->buildingNode->setAttribute($this->buildingAttr);
             $this->scope = 'nodeDeclaration';
         }
-        
+
         if (in_array($token, ['>', '/>'])) {
             // <foo bar/> - html5
             $this->nodeDeclarationScope($token);
         }
     }
-    
-    private function nodeAttributeValueDeclarationScope($token)
+
+    protected function nodeAttributeValueDeclarationScope($token)
     {
         if ($token && $token == $this->buildingAttr->valueDelimiter) {
             $this->scope = 'nodeDeclaration';
             // foo="x["]
-            $this->buildingNode->addAttribute($this->buildingAttr);
+            $this->buildingNode->setAttribute($this->buildingAttr);
             $this->buildingAttr = null;
         }
         else {
             // foo="[x][ ][y]"
-            $this->buildingAttr->nodeValue .= $token;
-        }        
+            $this->buildingAttr->value .= $token;
+        }
     }
-    
-    private function commentScope($token)
+
+    protected function commentScope($token)
     {
-        $this->buildingNode->nodeValue .= $token;
+        $this->buildingNode->append($token);
         if ($token == '-->') {
             $this->scope = 'text';
         }
-    }  
-    
-    private function scriptScope($token) 
+    }
+
+    protected function scriptScope($token)
     {
         $parentNode = end($this->nodeQueue);
         //$parentNode = $parentNode ? $parentNode : $this->dom;
         if (!$this->buildingNode) {
-            $this->buildingNode = new DomNode('#text', '');
+            $this->buildingNode = new TextNode();
         }
-        
-        if ($token == '</script>') 
+
+        if ($token == '</script>')
         {
-            if (trim($this->buildingNode->nodeValue) !== '') {
+            if (trim($this->buildingNode->getNodeValue()) !== '') {
                 $parentNode->appendChild($this->buildingNode);
             }
             array_pop($this->nodeQueue);
@@ -226,23 +229,23 @@ class Parser
             $this->buildingNode = null;
         }
         else {
-            $this->buildingNode->nodeValue .= $token;
-        }      
+            $this->buildingNode->append($token);
+        }
     }
-    
-    private function tryCloseTag($name)
+
+    protected function tryCloseTag($name)
     {
         $parentNode = end($this->nodeQueue);
         $parentNode = $parentNode ? $parentNode : $this->dom;
-        
+
         if ($name == 'br') {
             return $parentNode->appendChild(new DomNode('br'));
         }
-        
+
         $max = count($this->nodeQueue) -1;
         $shouldClose = false;
         for ($i = $max; $i >= 0; $i--) {
-            if ($this->nodeQueue[$i]->nodeName == $name) {
+            if ($this->nodeQueue[$i]->getNodeName() == $name) {
                 $shouldClose = true;
                 break;
             }
@@ -250,9 +253,9 @@ class Parser
         if (!$shouldClose) {
             return;
         }
-        
+
         $node = array_pop($this->nodeQueue);
-        while ($node && $node->nodeName != $name) {
+        while ($node && $node->getNodeName() != $name) {
             $node = array_pop($this->nodeQueue);
         }
     }

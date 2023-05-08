@@ -2,28 +2,50 @@
 
 namespace PhpTemplates\Dom;
 
-class DomNodeAttr
+use PhpTemplates\Dom\Contracts\DomNodeAttrInterface;
+
+class DomNodeAttr implements DomNodeAttrInterface
 {
-    public $nodeName;
-    public $nodeValue;
+    public $name;
+    public $value;
     public $valueDelimiter = '"'; // todo
 
-    public function __construct(string $nodeName, string $nodeValue = null)
+    public function __construct(string $name, string $value = null)
     {
-        $this->nodeName = $nodeName;
-        $this->nodeValue = $nodeValue;
+        $this->name = $name;
+        $this->value = $value;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
-        if (!$this->nodeName) {
-            return $this->nodeValue;
-        } elseif (is_null($this->nodeValue)) {
-            return $this->nodeName;
+        if (!$this->name) {
+            return $this->value;
+        } elseif (is_null($this->value)) {
+            return $this->name;
         }
-        
+
         $quot = $this->valueDelimiter;
 
-        return $this->nodeName . '=' . $quot . $this->nodeValue . $quot;
+        return $this->name . '=' . $quot . $this->value . $quot;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getValue()
+    {
+        return $this->value;
+    }
+
+    public function setValue($value): void
+    {
+        $this->value = $value;
+    }
+
+    public function append($value): void
+    {
+        $this->value .= $value;
     }
 }

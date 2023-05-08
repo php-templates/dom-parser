@@ -3,7 +3,7 @@
 require('./../autoload.php');
 
 $parser = new PhpTemplates\Dom\Parser([
-    
+
 ]);
 
 $html = file_get_contents('./cases/1.html');
@@ -24,3 +24,4 @@ foreach ($_expected as $i => $_expected) {
     die();
 }
 
+echo "PASSED";

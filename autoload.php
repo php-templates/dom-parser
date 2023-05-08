@@ -31,7 +31,7 @@ function d(...$data) {return;
         //echo '</pre>';
         echo PHP_EOL;
     }
-} 
+}
 
 spl_autoload_register(function ($class) {
     $class = trim($class, '\\');

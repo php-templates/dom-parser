@@ -2,11 +2,25 @@
 
 namespace PhpTemplates\Dom;
 
-use PhpTemplates\Dom\Contracts\DomNode as IDomNode;
-use PhpTemplates\Dom\Contracts\DomNodeWithAttributes;
+use PhpTemplates\Dom\Contracts\DomNodeAttrInterface;
+use PhpTemplates\Dom\Contracts\DomNodeInterface;
+use PhpTemplates\Dom\Traits\DomElement;
 
-class DomNode extends IDomNode implements DomNodeWithAttributes
+/**
+ * @inheritdoc
+ */
+class DomNode implements DomNodeInterface
 {
+    use DomElement;
+
+    /**
+     * DomNodeElement name, like input, textarea, div, etc.
+     * Nodes without rendering tags (like textnodes) will start with '#' and they will output only their 'nodeValue'
+     *
+     * @var string
+     */
+    protected string $nodeName;
+
     /**
      * List of node attributes
      *
@@ -15,11 +29,11 @@ class DomNode extends IDomNode implements DomNodeWithAttributes
     protected array $attrs = [];
 
     /**
-     * Used for rendering, it says if parsed syntax was like: <div/>, or in case of false: <div></div>
+     * DomNode Meta Data
      *
-     * @var boolean
+     * @var array
      */
-    public bool $shortClose = false;
+    public array $meta = [];
 
 
     public function __construct(string $nodeName, array $nodeValue = [])
@@ -28,21 +42,16 @@ class DomNode extends IDomNode implements DomNodeWithAttributes
 
         // short node declaration syntax
         foreach ($nodeValue as $k => $val) {
-            $this->addAttribute($k, $val);
+            $this->setAttribute($k, $val);
         }
     }
 
-    /**
-     * Node to html code
-     *
-     * @return string
-     */
     public function __toString(): string
     {
         // NODE START
-        $attrs = (string)$this->attrs;
+        $attrs = implode(' ', $this->attrs);
         $attrs = $attrs ? ' ' . $attrs : '';
-        $return = '<' . $this->nodeName . $attrs . ($this->shortClose ? '/>' : '>');
+        $return = '<' . $this->nodeName . $attrs . (empty($this->meta['shortClose']) ? '>' : '/>');
 
         // NODE CONTENT
         foreach ($this->childNodes as $cn) {
@@ -50,136 +59,105 @@ class DomNode extends IDomNode implements DomNodeWithAttributes
         }
 
         // NODE END
-        if (!$this->shortClose && !$this->isSelfClosingTag()) {
+        if (empty($this->meta['shortClose']) && !$this->isSelfClosingTag()) {
             $return .= "</{$this->nodeName}>";
         }
 
         return $return;
     }
-    
-    /**
-     * Get array of DomNodeAttr items
-     * @return array
-     */
+
+    public function getNodeName(): string
+    {
+        return $this->nodeName;
+    }
+
+    public function setNodeName(string $name): DomNodeInterface
+    {
+        $this->nodeName = $name;
+
+        return $this;
+    }
+
     public function getAttributes(): array
     {
         return $this->attrs;
     }
 
-    /**
-     * Get node attribute value by attribute name, null if no attribute found
-     *
-     * @param string $name
-     * @return mixed
-     */
     public function getAttribute(string $name)
     {
         foreach ($this->attrs as $attr) {
-            if ($attr->nodeName == $name) {
-                return $attr->nodeValue;
+            if ($attr->name == $name) {
+                return $attr->value;
             }
         }
     }
 
-    /**
-     * Add an attribute to node. If an already existing attribute will be found by given name, its value will be overriden
-     *
-     * @param string $nodeName
-     * @param string $nodeValue
-     * @return DomNode
-     */
-     public function setAttribute(string|IDomNodeAttr $name, $value = true): self
-     {
-         foreach ($this->attrs as $attr) {
-             if ($attr->nodeName == $name) {
-                 $attr->nodeValue = $value;
-
-                 return $this;
-             }
-         }
-
-         $this->attrs[] = new DomNodeAttr($name, $value);
-
-         return $this;
-     }
-
-    /**
-     * Add an attribute to node
-     *
-     * @param string|DomNodeAttr $nodeName
-     * @param string $nodeValue
-     * @return DomNode
-     */
-    public function addAttribute(string $name, $value = true): self
+    public function setAttribute($name, $value = null): DomNodeInterface
     {
+        if ($name instanceof DomNodeAttrInterface) {
+            /** @var DomNodeAttrInterface */
+            $attr = $name;
+            $this->attrs[] = $attr;
+
+            return $this;
+        }
+
+        foreach ($this->attrs as $attr) {
+            if ($attr->name == $name) {
+                $attr->value = $value;
+
+                return $this;
+            }
+        }
+
         $this->attrs[] = new DomNodeAttr($name, $value);
 
         return $this;
     }
 
-    /**
-     * Determine if an attribute exists on current node, by its name
-     *
-     * @param string $name
-     * @return boolean
-     */
+
     public function hasAttribute(string $name): bool
     {
         foreach ($this->attrs as $attr) {
-            if ($attr->nodeName == $name) {
+            if ($attr->name == $name) {
                 return true;
             }
         }
         return false;
     }
 
-    /**
-     * Remove node attribute, return node instance
-     *
-     * @param string $name
-     * @return DomNode
-     */
-     public function removeAttribute(string $name): self
-     {
-         foreach ($this->attrs as $i => $attr) {
-             if ($attr->nodeName == $name) {
-                 unset($this->attrs[$i]);
-             }
-         }
-
-         return $this;
-     }
-
-    /**
-     * Determine if is self closing tag
-     *
-     * @return boolean
-     */
-    private function isSelfClosingTag(): bool
+    public function removeAttribute(string $name): self
     {
-        static $selfClosingTags;
-        if (!$selfClosingTags) {
-            $selfClosingTags = [
-                'area',
-                'base',
-                'br',
-                'col',
-                'embed',
-                'hr',
-                'img',
-                'input',
-                'link',
-                'meta',
-                'param',
-                'source',
-                'track',
-                'wbr',
-                'command',
-                'keygen',
-                'menuitem',
-            ];
+        foreach ($this->attrs as $i => $attr) {
+            if ($attr->name == $name) {
+                unset($this->attrs[$i]);
+            }
         }
 
-        return in_array($this->nodeName, $selfClosingTags);
+        return $this;
+    }
+
+    public static $selfClosingTags = [
+        'area',
+        'base',
+        'br',
+        'col',
+        'embed',
+        'hr',
+        'img',
+        'input',
+        'link',
+        'meta',
+        'param',
+        'source',
+        'track',
+        'wbr',
+        'command',
+        'keygen',
+        'menuitem',
+    ];
+    private function isSelfClosingTag(): bool
+    {
+        return in_array($this->nodeName, self::$selfClosingTags);
     }
 }
