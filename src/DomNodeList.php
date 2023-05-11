@@ -4,21 +4,19 @@ namespace PhpTemplates\Dom;
 
 use PhpTemplates\Dom\Contracts\DomElementInterface;
 
-class DomNodeIterator implements \Iterator, DomElementInterface
+class DomNodeList implements \Iterator, DomElementInterface
 {
-    public ?DomElementInterface $head = null;
-    private ?DomElementInterface $current = null;
     private int $i = 0;
+    private array $list = [];
 
     public function rewind()
     {
         $this->i = 0;
-        $this->current = $this->head;
     }
 
     public function current()
     {
-        return $this->current;
+        return $this->list[$this->i];
     }
 
     public function key()
@@ -28,80 +26,54 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function next()
     {
-        $this->current = $this->current->getNextSibling();
         $this->i++;
     }
 
     public function valid()
     {
-        return !is_null($this->current);
+        return isset($this->list[$this->i]);
     }
-
-    public function any(): bool
+    
+    public function push(DomElementInterface $node)
     {
-        return !is_null($this->head);
+        $this->list[] = $node;
+        
+        return $this;
     }
 
     public function first(): ?DomElementInterface
     {
-        return $this->head;
+        if (!$this->list) {
+            return null;
+        }
+        
+        return reset($this->list);
     }
 
     public function item(int $index): ?DomElementInterface
     {
-        if (!$this->head) {
-            return null;
-        }
-
-        $item = $this->head;
-        for ($i = 0; $i < $index; $i++) {
-            $item = $item->getNextSibling();
-        }
-
-        return $item;
+        return $this->list[$index] ?? null;
     }
 
     public function last(): ?DomElementInterface
     {
-        if (!$this->head) {
+        if (!$this->list) {
             return null;
-        }
-
-        $last = $this->head;
-        while ($next = $last->getNextSibling()) {
-            $last = $next;
-        }
-
-        return $last;
+        }    
+        
+        return end($this->list);
     }
 
     public function count(): int
     {
-        if (!$this->head) {
-            return 0;
-        }
-
-        $i = 1;
-        $last = $this->head;
-        while ($next = $last->getNextSibling()) {
-            $last = $next;
-            $i++;
-        }
-
-        return $i;
+        return count($this->list);
     }
 
     public function __toString(): string
     {
-        if (!$this->head) {
-            return '';
-        }
-
-        $output = (string)$this->head;
-        $last = $this->head;
-        while ($next = $last->getNextSibling()) {
-            $last = $next;
-            $output .= $next;
+        $output = '';
+        foreach ($this->list as $node) {
+            $output .= $node;
         }
 
         return $output;
@@ -109,29 +81,29 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function getParentNode(): ?DomElementInterface
     {
-        if ($this->head) {
-            return $this->head->getParentNode();
+        if (isset($this->list[0])) {
+            return $this->list[0]->getParentNode();
         }
     }
 
     public function getPrevSibling(): ?DomElementInterface
     {
-        if ($this->head) {
-            return $this->head->getPrevSibling();
+        if (isset($this->list[0])) {
+            return $this->list[0]->getPrevSibling();
         }
     }
 
     public function getNextSibling(): ?DomElementInterface
     {
-        if ($this->head) {
-            return $this->head->getNextSibling();
+        if (isset($this->list[0])) {
+            return $this->list[0]->getNextSibling();
         }
     }
 
     public function getChildNodes(): DomNodeIterator
     {
-        if ($this->head) {
-            return $this->head->getChildNodes();
+        if (isset($this->list[0])) {
+            return $this->list[0]->getChildNodes();
         }
 
         return new DomNodeIterator;
@@ -139,9 +111,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function setParentNode(DomElementInterface $node = null): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->setParentNode($node);
         }
 
@@ -150,9 +120,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function setPrevSibling(DomElementInterface $node = null): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->setPrevSibling($node);
         }
 
@@ -161,9 +129,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function setNextSibling(DomElementInterface $node = null): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->setNextSibling($node);
         }
 
@@ -172,9 +138,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function appendChild(DomElementInterface $node): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->appendChild($node);
         }
 
@@ -183,9 +147,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function prependChild(DomElementInterface $node): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->prependChild($node);
         }
 
@@ -194,9 +156,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function insertBefore(DomElementInterface $node): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->insertBefore($node);
         }
 
@@ -205,9 +165,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function appendTo(DomElementInterface $node): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->appendTo($node);
         }
 
@@ -216,9 +174,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function insertAfter(DomElementInterface $node): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->insertAfter($node);
         }
 
@@ -227,9 +183,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function before(DomElementInterface $node): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->before($node);
         }
 
@@ -238,9 +192,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function after(DomElementInterface $node): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->after($node);
         }
 
@@ -249,9 +201,7 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function detach(): DomElementInterface
     {
-        $this->rewind();
-        while ($elNode = $this->current) {
-            $this->next();
+        foreach ($this->list as $elNode) {
             $elNode->detach();
         }
 

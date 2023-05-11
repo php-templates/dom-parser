@@ -5,6 +5,7 @@ namespace PhpTemplates\Dom;
 use PhpTemplates\Dom\Contracts\DomNodeAttrInterface;
 use PhpTemplates\Dom\Contracts\DomNodeInterface;
 use PhpTemplates\Dom\Traits\DomElement;
+use PhpTemplates\Dom\Traits\QuerySelector;
 
 /**
  * @inheritdoc
@@ -12,6 +13,7 @@ use PhpTemplates\Dom\Traits\DomElement;
 class DomNode implements DomNodeInterface
 {
     use DomElement;
+    use QuerySelector;
 
     /**
      * DomNodeElement name, like input, textarea, div, etc.
@@ -86,8 +88,8 @@ class DomNode implements DomNodeInterface
     public function getAttribute(string $name)
     {
         foreach ($this->attrs as $attr) {
-            if ($attr->name == $name) {
-                return $attr->value;
+            if ($attr->getName() == $name) {
+                return $attr->getValue();
             }
         }
     }
@@ -103,8 +105,8 @@ class DomNode implements DomNodeInterface
         }
 
         foreach ($this->attrs as $attr) {
-            if ($attr->name == $name) {
-                $attr->value = $value;
+            if ($attr->getName() == $name) {
+                $attr->setValue($value);
 
                 return $this;
             }
@@ -119,7 +121,7 @@ class DomNode implements DomNodeInterface
     public function hasAttribute(string $name): bool
     {
         foreach ($this->attrs as $attr) {
-            if ($attr->name == $name) {
+            if ($attr->getName() == $name) {
                 return true;
             }
         }
@@ -129,7 +131,7 @@ class DomNode implements DomNodeInterface
     public function removeAttribute(string $name): self
     {
         foreach ($this->attrs as $i => $attr) {
-            if ($attr->name == $name) {
+            if ($attr->getName() == $name) {
                 unset($this->attrs[$i]);
             }
         }

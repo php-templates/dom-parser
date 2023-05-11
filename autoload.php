@@ -18,17 +18,14 @@ ini_set('error_reporting', E_ALL);
     }
 }
 
-function d(...$data) {return;
-    $GLOBALS['X'] = $GLOBALS['X'] ?? 0;
-    $GLOBALS['X']++;
-    $GLOBALS['X'] > 100 && die();
-    //$x = debug_backtrace();
-    //print_r($x[0]['file'].':'.$x[0]['line'].PHP_EOL);
+function d(...$data) {
+    $x = debug_backtrace();
+    print_r($x[0]['file'].':'.$x[0]['line'].PHP_EOL);
     foreach ($data as $d) {
         //var_dump($d);
-        //echo '<pre>';
+        echo '<pre>';
         print_r($d);
-        //echo '</pre>';
+        echo '</pre>';
         echo PHP_EOL;
     }
 }
