@@ -1,0 +1,19 @@
+{
+    "name": "php-templates/dom-parser",
+    "license": "MIT",
+    "description": "Php standalone Dom parser",
+    "keywords": ["php", "templates", "dom", "parser"],
+    "homepage": "https://github.com/php-templates/dom-parser",
+    "authors": [
+        {
+            "name": "Florin Botea",
+            "homepage": "https://github.com/php-templates",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "PhpTemplates\\": "src/"
+        }
+    }
+}
