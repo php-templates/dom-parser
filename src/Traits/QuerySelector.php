@@ -1,8 +1,8 @@
 <?php
 
-namespace PhpTemplates\Dom\Traits;
+namespace PhpDom\Traits;
 
-use PhpTemplates\Dom\QuerySelector as QuerySelectorClass;
+use PhpDom\QuerySelector as QuerySelectorClass;
 
 trait QuerySelector
 {

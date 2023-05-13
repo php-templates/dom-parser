@@ -1,11 +1,11 @@
 <?php
 
-namespace PhpTemplates\Dom;
+namespace PhpDom;
 
-use PhpTemplates\Dom\Contracts\DomNodeAttrInterface;
-use PhpTemplates\Dom\Contracts\DomNodeInterface;
-use PhpTemplates\Dom\Traits\DomElement;
-use PhpTemplates\Dom\Traits\QuerySelector;
+use PhpDom\Contracts\DomNodeAttrInterface;
+use PhpDom\Contracts\DomNodeInterface;
+use PhpDom\Traits\DomElement;
+use PhpDom\Traits\QuerySelector;
 
 /**
  * @inheritdoc

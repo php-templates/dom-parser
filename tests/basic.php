@@ -2,7 +2,7 @@
 
 require('./../autoload.php');
 
-$parser = new PhpTemplates\Dom\Parser([
+$parser = new PhpDom\Parser([
 
 ]);
 

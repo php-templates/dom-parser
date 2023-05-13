@@ -1,9 +1,9 @@
 <?php
 
-namespace PhpTemplates\Dom;
+namespace PhpDom;
 
-use PhpTemplates\Dom\Contracts\TextNodeInterface;
-use PhpTemplates\Dom\Traits\DomElement;
+use PhpDom\Contracts\TextNodeInterface;
+use PhpDom\Traits\DomElement;
 
 /**
  * @inheritdoc

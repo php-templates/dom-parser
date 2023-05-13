@@ -1,9 +1,9 @@
 <?php
 
-namespace PhpTemplates\Dom\Traits;
+namespace PhpDom\Traits;
 
-use PhpTemplates\Dom\Contracts\DomElementInterface;
-use PhpTemplates\Dom\DomNodeIterator;
+use PhpDom\Contracts\DomElementInterface;
+use PhpDom\DomNodeIterator;
 
 trait DomElement
 {

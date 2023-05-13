@@ -1,8 +1,8 @@
 <?php
 
-namespace PhpTemplates\Dom;
+namespace PhpDom;
 
-use PhpTemplates\Dom\Contracts\DomNodeAttrInterface;
+use PhpDom\Contracts\DomNodeAttrInterface;
 
 class DomNodeAttr implements DomNodeAttrInterface
 {

@@ -2,11 +2,11 @@
 
 require('./../autoload.php');
 
-use PhpTemplates\Dom\Parser;
-use PhpTemplates\Dom\DomNode;
-use PhpTemplates\Dom\QuerySelector;
+use PhpDom\Parser;
+use PhpDom\DomNode;
+use PhpDom\QuerySelector;
 
-$parser = new PhpTemplates\Dom\Parser([
+$parser = new PhpDom\Parser([
 
 ]);
 

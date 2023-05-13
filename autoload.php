@@ -32,7 +32,7 @@ function d(...$data) {
 
 spl_autoload_register(function ($class) {
     $class = trim($class, '\\');
-    $path = 'PhpTemplates\\Dom';
+    $path = 'PhpDom\\';
     if (strpos($class, $path) === 0) {
         $class = str_replace($path, '', $class);
         $file = __DIR__.'/src/'.$class.'.php';

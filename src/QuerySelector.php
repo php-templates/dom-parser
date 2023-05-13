@@ -1,9 +1,9 @@
 <?php
 
-namespace PhpTemplates\Dom;
+namespace PhpDom;
 
-use PhpTemplates\Dom\Contracts\DomNodeInterface;
-use PhpTemplates\Dom\Contracts\DomElementInterface;
+use PhpDom\Contracts\DomNodeInterface;
+use PhpDom\Contracts\DomElementInterface;
 use Closure;
 
 /*

@@ -1,70 +1,91 @@
 <?php
 
-namespace PhpTemplates\Dom;
+namespace PhpDom;
 
 use Closure;
-use PhpTemplates\InvalidNodeException;
-use PhpTemplates\Source;
+use SplFileInfo;
+
 // todo: validari cu tipete
 class Parser
 {
-    private $dom;
-    private $nodeQueue = [];
+    public static $repair_html = false;
+    public static $throw_errors = false;
+    
+    private ?DomNode $dom;
+    private array $nodeQueue = [];
 
-    private $line = 1;
-    private $scope = 'text';
-    private $buildingNode;
-    private $buildingAttr;
+    private ?SplFileInfo $file;
+    private int $line = 1;
+    private string $scope = 'text';
+    private ?DomElementInterface $buildingNode;
+    private ?DomNodeAttrInterface $buildingAttr;
 
-    private $options = [
-        'repair_html' => false,
-        'throw_errors' => false,
-    ];
+    private $options = [];
 
     public function __construct(array $options = [])
     {
-        $this->options = array_merge($this->options, $options);
+        $this->options = array_merge([
+            'repair_html' => self::$repair_html,
+            'throw_errors' => self::$throw_errors,
+        ], $options);
     }
 
-    public function parse(/*Source*/ $source)
-    {todo source class
-        $this->dom = new DomNode('#root');
+    public function parse(Source $source)
+    {
+        // reset
+        $this->file = new SplFileInfo($source->getFile());
+        $this->line = 1;
+        $this->dom = new DomNode('');
         $this->nodeQueue = [];
+        $this->scope = 'text';
+        $this->buildingNode = null;
+        $this->buildingAttr = null;
 
-        $html = (string)$source;
-        $chars = array_map('preg_quote', [
-            '<',
-            '>',
-            '=',
-            '"',
-            '\'',
-            //'!',
-            //'?',
-            //'-',
-            //'\\',
-        ]);
-        $chars = implode('|', array_merge([
-            '<[a-zA-Z0-9_\-]+',
-            '<\/[a-zA-Z0-9_\-]+>',
-            '\/>',
-            '<!--',
-            '-->',
-            '= *"',
-            '= *\'',
-            '[\s\t ]+',
-            '[\n\r]',
-        ], $chars));
-
-        $tokens = preg_split("/($chars)/ms", $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+        // parse
+        $tokens = $this->tokenize((string)$source);
         foreach ($tokens as $token) {
             $this->add($token);
         }
 
+        // return nodelist or node (if only one root element found)
         if ($this->dom->getChildNodes()->count() > 1) {
             return $this->dom->getChildNodes();
         }
 
         return $this->dom->getChildNodes()->first();
+    }
+    
+    // split html string into relevant tokens to be interpreted in context
+    protected function tokenize(string $html)
+    {
+        static $chars;
+        if (!$chars) 
+        {
+            $chars = array_map('preg_quote', [
+                '<',
+                '>',
+                '=',
+                '"',
+                '\'',
+                //'!',
+                //'?',
+                //'-',
+                //'\\',
+            ]);
+            $chars = implode('|', array_merge([
+                '<[a-zA-Z0-9_\-]+',
+                '<\/[a-zA-Z0-9_\-]+>',
+                '\/>',
+                '<!--',
+                '-->',
+                '= *"',
+                '= *\'',
+                '[\s\t ]+',
+                '[\n\r]',
+            ], $chars));
+        }
+
+        return preg_split("/($chars)/ms", $html, -1, PREG_SPLIT_DELIM_CAPTURE);        
     }
 
     protected function add($token)
@@ -100,7 +121,8 @@ class Parser
                     // treat it as text
                     return $this->buildingNode->append($token);
                 }
-                throw new \Exception("Unexpected token $token at line {$this->line}, expecting end tag for node <{$parentNode->getNodeName()}> started at line {$parentNode->meta['lineNumber']}");
+                $inFile = $this->file ? 'in ' . $this->file->getRealPath() : '';
+                throw new \Exception("Unexpected token $token $inFile at line {$this->line}, expecting end tag for node <{$parentNode->getNodeName()}> started at line {$parentNode->meta['line']}");
             }
 
             if (trim($this->buildingNode->getNodeValue()) !== '') {
@@ -119,7 +141,8 @@ class Parser
             }
 
             $this->buildingNode = new DomNode($m[1]);
-            $this->buildingNode->meta['lineNumber'] = $this->line;
+            $this->buildingNode->meta['file'] = $this->file;
+            $this->buildingNode->meta['line'] = $this->line;
             $this->scope = 'nodeDeclaration';
         }
 
@@ -239,7 +262,10 @@ class Parser
         $parentNode = $parentNode ? $parentNode : $this->dom;
 
         if ($name == 'br') {
-            return $parentNode->appendChild(new DomNode('br'));
+            $br = new DomNode('br');
+            $br->meta['file'] = $this->file;
+            $br->meta['line'] = $this->line;
+            return $parentNode->appendChild($br);
         }
 
         $max = count($this->nodeQueue) -1;

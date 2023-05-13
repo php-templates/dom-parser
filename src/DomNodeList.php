@@ -1,8 +1,8 @@
 <?php
 
-namespace PhpTemplates\Dom;
+namespace PhpDom;
 
-use PhpTemplates\Dom\Contracts\DomElementInterface;
+use PhpDom\Contracts\DomElementInterface;
 
 class DomNodeList implements \Iterator, DomElementInterface
 {

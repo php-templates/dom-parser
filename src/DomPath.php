@@ -1,9 +1,9 @@
 <?php
 
-namespace PhpTemplates\Dom;
+namespace PhpDom;
 
-use PhpTemplates\Dom\Contracts\DomElementInterface;
-use PhpTemplates\Dom\Contracts\DomNodeInterface;
+use PhpDom\Contracts\DomElementInterface;
+use PhpDom\Contracts\DomNodeInterface;
 use Closure;
 
 class DomPath

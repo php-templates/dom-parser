@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpTemplates\Dom\Contracts;
+namespace PhpDom\Contracts;
 
 interface DomNodeInterface extends DomElementInterface
 {
