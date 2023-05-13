@@ -4,6 +4,8 @@ namespace PhpDom;
 
 use Closure;
 use SplFileInfo;
+use PhpDom\Contracts\DomElementInterface;
+use PhpDom\Contracts\DomNodeAttrInterface;
 
 // todo: validari cu tipete
 class Parser

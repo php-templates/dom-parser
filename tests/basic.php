@@ -7,7 +7,7 @@ $parser = new PhpDom\Parser([
 ]);
 
 $html = file_get_contents('./cases/1.html');
-$dom = $parser->parse($html);
+$dom = $parser->parse(new PhpDom\Source($html, 'cases/1.html'));
 $result = preg_replace('/[\n\r\t\s]*/', '', $dom);
 $expected = preg_replace('/[\n\r\t\s]*/', '', $html);
 $_expected = str_split($expected, 400);
