@@ -55,4 +55,15 @@ class TextNode implements TextNodeInterface
         return $this;
     }
 
+    // todo make this
+    public function getFile() 
+    {
+        return $this->meta['file'] ?? null;
+    }
+    
+    // todo make this
+    public function getLine() 
+    {
+        return $this->meta['line'] ?? null;
+    }
 }

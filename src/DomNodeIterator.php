@@ -7,18 +7,25 @@ use PhpDom\Contracts\DomElementInterface;
 class DomNodeIterator implements \Iterator, DomElementInterface
 {
     public ?DomElementInterface $head = null;
-    private ?DomElementInterface $current = null;
+    private $array = [];
     private int $i = 0;
 
     public function rewind()
     {
         $this->i = 0;
-        $this->current = $this->head;
+        $array = [];
+        $item = $this->head;
+        while ($item) {
+            $array[] = $item;
+            $item = $item->getNextSibling();
+        }
+        
+        $this->array = $array;
     }
 
     public function current()
     {
-        return $this->current;
+        return $this->array[$this->i];
     }
 
     public function key()
@@ -28,13 +35,12 @@ class DomNodeIterator implements \Iterator, DomElementInterface
 
     public function next()
     {
-        $this->current = $this->current->getNextSibling();
         $this->i++;
     }
 
     public function valid()
     {
-        return !is_null($this->current);
+        return isset($this->array[$this->i]);
     }
 
     public function any(): bool

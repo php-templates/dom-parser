@@ -6,10 +6,127 @@ use Closure;
 use SplFileInfo;
 use PhpDom\Contracts\DomElementInterface;
 use PhpDom\Contracts\DomNodeAttrInterface;
+use PhpDom\Exceptions\UnclosedTagException;
+use PhpDom\Exceptions\InvalidNodeException;
 
 // todo: validari cu tipete
 class Parser
 {
+    private static $htmlTags = [
+        'a',
+        'abbr',
+        'address',
+        'area',
+        'article',
+        'aside',
+        'audio',
+        'b',
+        'base',
+        'bdi',
+        'bdo',
+        'blockquote',
+        'body',
+        'br',
+        'button',
+        'canvas',
+        'caption',
+        'cite',
+        'code',
+        'col',
+        'colgroup',
+        'data',
+        'datalist',
+        'dd',
+        'del',
+        'details',
+        'dfn',
+        'dialog',
+        'div',
+        'dl',
+        'dt',
+        'em',
+        'embed',
+        'fieldset',
+        'figcaption',
+        'figure',
+        'footer',
+        'form',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'head',
+        'header',
+        'hr',
+        'html',
+        'i',
+        'iframe',
+        'img',
+        'input',
+        'ins',
+        'kbd',
+        'label',
+        'legend',
+        'li',
+        'link',
+        'main',
+        'map',
+        'mark',
+        'meta',
+        'meter',
+        'nav',
+        'noscript',
+        'object',
+        'ol',
+        'optgroup',
+        'option',
+        'output',
+        'p',
+        'param',
+        'picture',
+        'pre',
+        'progress',
+        'q',
+        'rb',
+        'rp',
+        'rt',
+        'rtc',
+        'ruby',
+        's',
+        'samp',
+        'script',
+        'section',
+        'select',
+        'slot',
+        'small',
+        'source',
+        'span',
+        'strong',
+        'style',
+        'sub',
+        'summary',
+        'sup',
+        'table',
+        'tbody',
+        'td',
+        'template',
+        'textarea',
+        'tfoot',
+        'th',
+        'thead',
+        'time',
+        'title',
+        'tr',
+        'track',
+        'u',
+        'ul',
+        'var',
+        'video',
+        'wbr',
+    ];
+    
     public static $repair_html = false;
     public static $throw_errors = false;
     
@@ -49,9 +166,17 @@ class Parser
             $this->add($token);
         }
 
+        if ($this->buildingNode) {
+            $this->dom->appendChild($this->buildingNode);
+        }
+            
         // return nodelist or node (if only one root element found)
         if ($this->dom->getChildNodes()->count() > 1) {
-            return $this->dom->getChildNodes();
+            return $this->dom;
+        }
+
+        if (! $this->dom->getChildNodes()->first()) {
+            return $this->dom;
         }
 
         return $this->dom->getChildNodes()->first();
@@ -105,6 +230,8 @@ class Parser
         $parentNode = $parentNode ? $parentNode : $this->dom;
         if (!$this->buildingNode) {
             $this->buildingNode = new TextNode();
+            $this->buildingNode->meta['file'] = $this->file;
+            $this->buildingNode->meta['line'] = $this->line;
         }
 
         if ($token == '<!--') {
@@ -124,7 +251,7 @@ class Parser
                     return $this->buildingNode->append($token);
                 }
                 $inFile = $this->file ? 'in ' . $this->file->getRealPath() : '';
-                throw new \Exception("Unexpected token $token $inFile at line {$this->line}, expecting end tag for node <{$parentNode->getNodeName()}> started at line {$parentNode->meta['line']}");
+                throw new UnclosedTagException("Unexpected token ". htmlentities($token) ." $inFile at line {$this->line}, expecting end tag for node '". $parentNode->getNodeName() ."' started at line {$parentNode->meta['line']}", (string)$this->file, $this->line);
             }
 
             if (trim($this->buildingNode->getNodeValue()) !== '') {
@@ -171,6 +298,8 @@ class Parser
                 $this->scope = 'text';
             }
             $this->buildingNode = new TextNode();
+            $this->buildingNode->meta['file'] = $this->file;
+            $this->buildingNode->meta['line'] = $this->line;
         }
 
         elseif ($token == '/>') {
@@ -178,12 +307,20 @@ class Parser
             $this->buildingNode->meta['shortClose'] = true;
             $parentNode->appendChild($this->buildingNode);
             $this->buildingNode = new TextNode();
+            $this->buildingNode->meta['file'] = $this->file;
+            $this->buildingNode->meta['line'] = $this->line;
             $this->scope = 'text';
+        }
+        
+        elseif (preg_match('/^[\'"<=]/', trim($token))) {
+            throw new InvalidNodeException("Unexpected token ". htmlentities($token), (string)$this->file, $this->line);
         }
 
         elseif (trim($token) !== '') {
             // <foo [bar]="bam">
             $this->buildingAttr = new DomNodeAttr($token, null);
+            $this->buildingAttr->meta['file'] = $this->file;
+            $this->buildingAttr->meta['line'] = $this->line;
             $this->scope = 'nodeAttributeDeclaration';
         }
     }
@@ -242,6 +379,8 @@ class Parser
         //$parentNode = $parentNode ? $parentNode : $this->dom;
         if (!$this->buildingNode) {
             $this->buildingNode = new TextNode();
+            $this->buildingNode->meta['file'] = $this->file;
+            $this->buildingNode->meta['line'] = $this->line;
         }
 
         if ($token == '</script>')
@@ -286,5 +425,10 @@ class Parser
         while ($node && $node->getNodeName() != $name) {
             $node = array_pop($this->nodeQueue);
         }
+    }
+    
+    public static function isHtmlTag($tag)
+    {
+        return in_array($tag, self::$htmlTags);
     }
 }

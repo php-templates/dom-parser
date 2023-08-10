@@ -10,7 +10,7 @@ interface DomNodeInterface extends DomElementInterface
      * @return string
      */
     public function getNodeName(): string;
-
+    
     /**
      * Change Node Name to be rendered
      *

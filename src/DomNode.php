@@ -11,7 +11,7 @@ use PhpDom\Traits\QuerySelector;
  * @inheritdoc
  */
 class DomNode implements DomNodeInterface
-{
+{// todo: validari
     use DomElement;
     use QuerySelector;
 
@@ -32,8 +32,6 @@ class DomNode implements DomNodeInterface
 
     /**
      * DomNode Meta Data
-     *
-     * @var array
      */
     public array $meta = [];
 
@@ -50,10 +48,14 @@ class DomNode implements DomNodeInterface
 
     public function __toString(): string
     {
+        $return = '';
+        
         // NODE START
-        $attrs = implode(' ', $this->attrs);
-        $attrs = $attrs ? ' ' . $attrs : '';
-        $return = '<' . $this->nodeName . $attrs . (empty($this->meta['shortClose']) ? '>' : '/>');
+        if ($this->nodeName) {
+            $attrs = implode(' ', $this->attrs);
+            $attrs = $attrs ? ' ' . $attrs : '';
+            $return = '<' . $this->nodeName . $attrs . (empty($this->meta['shortClose']) ? '>' : '/>');
+        }
 
         // NODE CONTENT
         foreach ($this->childNodes as $cn) {
@@ -61,7 +63,7 @@ class DomNode implements DomNodeInterface
         }
 
         // NODE END
-        if (empty($this->meta['shortClose']) && !$this->isSelfClosingTag()) {
+        if ($this->nodeName && empty($this->meta['shortClose']) && !$this->isSelfClosingTag()) {
             $return .= "</{$this->nodeName}>";
         }
 
@@ -130,6 +132,11 @@ class DomNode implements DomNodeInterface
 
     public function removeAttribute(string $name): self
     {
+        if ($name == '*') {
+            $this->attrs = [];
+            return $this;
+        }
+        
         foreach ($this->attrs as $i => $attr) {
             if ($attr->getName() == $name) {
                 unset($this->attrs[$i]);
@@ -138,6 +145,20 @@ class DomNode implements DomNodeInterface
 
         return $this;
     }
+    
+    // todo make this
+    public function getFile() 
+    {
+        return $this->meta['file'] ?? null;
+    }
+    
+    // todo make this
+    public function getLine() 
+    {
+        return $this->meta['line'] ?? null;
+    }
+    
+    
 
     public static $selfClosingTags = [
         'area',

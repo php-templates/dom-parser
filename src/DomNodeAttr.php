@@ -3,12 +3,20 @@
 namespace PhpDom;
 
 use PhpDom\Contracts\DomNodeAttrInterface;
+use PhpDom\Traits\Accessor;
 
 class DomNodeAttr implements DomNodeAttrInterface
 {
-    public $name;
-    public $value;
-    public $valueDelimiter = '"'; // todo
+    use Accessor;
+    
+    protected $name;
+    protected $value;
+    protected $valueDelimiter = '"'; // todo
+    
+    /**
+     * DomNode Meta Data
+     */
+    public array $meta = [];
 
     public function __construct(string $name, string $value = null)
     {
@@ -33,6 +41,11 @@ class DomNodeAttr implements DomNodeAttrInterface
     {
         return $this->name;
     }
+    
+    public function getValueDelimiter(): string
+    {
+        return $this->valueDelimiter;
+    }
 
     public function getValue()
     {
@@ -42,6 +55,11 @@ class DomNodeAttr implements DomNodeAttrInterface
     public function setValue($value): void
     {
         $this->value = $value;
+    }
+    
+    public function setValueDelimiter(string $char) 
+    {
+        $this->valueDelimiter = $char;
     }
 
     public function append($value): void
