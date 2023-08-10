@@ -13,6 +13,10 @@ class Source
 
     public function __construct(string $code, string $file, int $startLine = 0)
     {
+        if ($file) {
+            $file = realpath($file);
+        }
+        
         $this->code = $code;
         $this->file = $file;
         $this->startLine = $startLine;

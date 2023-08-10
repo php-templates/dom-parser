@@ -166,7 +166,10 @@ class Parser
             $this->add($token);
         }
 
-        if ($this->buildingNode) {
+        if ($this->buildingNode instanceof DomNode) {
+            throw new UnclosedTagException("Unexpected end of the document, expecting end tag for node '". $this->buildingNode->getNodeName() ."' started at line {$this->buildingNode->meta['line']}", (string)$this->file, $this->buildingNode->meta['line']);
+        }
+        elseif ($this->buildingNode) {
             $this->dom->appendChild($this->buildingNode);
         }
             
