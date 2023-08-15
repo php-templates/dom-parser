@@ -11,7 +11,7 @@ use PhpDom\Traits\QuerySelector;
  * @inheritdoc
  */
 class DomNode implements DomNodeInterface
-{// todo: validari
+{// todo: validari pe construct
     use DomElement;
     use QuerySelector;
 
@@ -130,15 +130,18 @@ class DomNode implements DomNodeInterface
         return false;
     }
 
-    public function removeAttribute(string $name): self
+    public function removeAttribute($attr): self
     {
-        if ($name == '*') {
+        if ($attr == '*') {
             $this->attrs = [];
             return $this;
         }
         
-        foreach ($this->attrs as $i => $attr) {
-            if ($attr->getName() == $name) {
+        foreach ($this->attrs as $i => $_attr) {
+            if (is_string($attr) && $_attr->getName() == $attr) {
+                unset($this->attrs[$i]);
+            }
+            elseif ($attr instanceof DomNodeAttrInterface && $_attr === $attr) {
                 unset($this->attrs[$i]);
             }
         }

@@ -11,7 +11,7 @@ class DomNodeAttr implements DomNodeAttrInterface
     
     protected $name;
     protected $value;
-    protected $valueDelimiter = '"'; // todo
+    protected $valueDelimiter = '"';
     
     /**
      * DomNode Meta Data
