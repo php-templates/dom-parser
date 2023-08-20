@@ -45,6 +45,11 @@ class DomNode implements DomNodeInterface
             $this->setAttribute($k, $val);
         }
     }
+    
+    public static function new(string $nodeName, array $nodeValue = []) 
+    {
+        return new self($nodeName, $nodeValue);
+    }
 
     public function __toString(): string
     {
