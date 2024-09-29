@@ -260,6 +260,7 @@ class Parser
             if (trim($this->buildingNode->getNodeValue()) !== '') {
                 $parentNode->appendChild($this->buildingNode);
             }
+            
             array_pop($this->nodeQueue);
             //$m[1]=='script' && d(end($this->nodeQueue));
             $this->buildingNode = null;
@@ -268,11 +269,15 @@ class Parser
         elseif (preg_match('/<([a-zA-Z0-9_\-]+)/', $token, $m))
         {
             // [<foo] bar=""
+            $indent = '';
             if (trim($this->buildingNode->getNodeValue()) !== '') {
                 $parentNode->appendChild($this->buildingNode);
+            } elseif ($this->buildingNode->getNodeValue() !== '') {
+                $indent = $this->buildingNode->getNodeValue();
             }
 
             $this->buildingNode = new DomNode($m[1]);
+            $this->buildingNode->indent = $indent;
             $this->buildingNode->meta['file'] = $this->file;
             $this->buildingNode->meta['line'] = $this->line;
             $this->scope = 'nodeDeclaration';

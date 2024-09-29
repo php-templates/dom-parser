@@ -59,11 +59,11 @@ class DomNode implements DomNodeInterface
         if ($this->nodeName) {
             $attrs = implode(' ', $this->attrs);
             $attrs = $attrs ? ' ' . $attrs : '';
-            $return = '<' . $this->nodeName . $attrs . (empty($this->meta['shortClose']) ? '>' : '/>');
+            $return = $this->indent .'<'. $this->nodeName . $attrs . (empty($this->meta['shortClose']) ? '>' : '/>');
         }
 
         // NODE CONTENT
-        foreach ($this->childNodes as $cn) {
+        foreach ($this->childNodes ?? [] as $cn) {
             $return .= $cn;
         }
 

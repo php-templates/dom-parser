@@ -35,6 +35,7 @@ trait DomElement
      */
     protected DomNodeIterator $childNodes;
 
+    public string $indent = '';
 
     private function assertNotContained(DomElementInterface $parent, DomElementInterface $append)
     {
